@@ -1,46 +1,45 @@
-# Universal Frameworks for Accelerated Learning & Knowledge Engineering
+# Programy i Narzędzia do Szybkiej Nauki (Accelerated Learning)
 
-Repozytorium zawiera autorskie skrypty, mini-aplikacje oraz narzędzia programistyczne automatyzujące i optymalizujące proces przyswajania wiedzy z dowolnej dziedziny, branży czy dyscypliny naukowej. Głównym celem projektu jest dostarczenie uniwersalnych rozwiązań z zakresu inżynierii wiedzy (Knowledge Engineering), które minimalizują czas potrzebny na przejście od surowych danych do pełnego opanowania teorii i praktyki.
+Repozytorium zawiera autorskie skrypty i aplikacje, które automatyzują i przyspieszają proces nauki. Narzędzia zostały zaprojektowane tak, aby były **całkowicie uniwersalne** – nie są przypisane do żadnej konkretnej branży. Pomagają w szybszym przejściu od surowych materiałów (tekstów, dokumentów) do realnego opanowania teorii i praktyki w dowolnej dziedzinie.
 
-Architektura całego projektu została zaprojektowana w sposób **całkowicie agnostyczny (domain-agnostic)**. Narzędzia nie są powiązane z żadną konkretną niszą – służą do strukturyzacji, parsowania i optymalizacji zapamiętywania dowolnych informacji, niezależnie od tego, czy są to przepisy prawne, składnia języków programowania, procedury techniczne czy nomenklatura medyczna.
+Wszystkie programy opierają się na sprawdzonych metodach edukacyjnych: aktywnej powtórce (Active Recall), systemie powtórek interwałowych (Spaced Repetition) oraz automatycznym przetwarzaniu danych.
 
-Wszystkie programy bazują na rygorystycznych modelach kognitywnych: powtórkach interwałowych (Spaced Repetition), aktywnym odtwarzaniu informacji (Active Recall) oraz automatycznej syntezie danych (Data Parsing).
-<img width="1651" height="906" alt="image" src="https://github.com/user-attachments/assets/ddb0ac70-cfb7-4d60-88cb-5ce25fa2b57a" />
-
----
-
-## 🛠️ Struktura i Komponenty Systemu
-
-Katalog został podzielony według narzędzi realizujących konkretne operacje na danych i procesach kognitywnych:
-
-### 1. Automatyzacja baz wiedzy i struktur memorandum (`/generators`)
-Uniwersalne skrypty odpowiedzialne za transformację surowych, nieustrukturyzowanych danych wejściowych w gotowe systemy edukacyjne.
-* **Strukturyzatory danych tekstowych (Raw Data Parsers):** Narzędzia automatycznie izolujące definicje, reguły i korelacje logiczne z dowolnych plików tekstowych (dokumentacje, e-booki, akty prawne).
-* **Uniwersalne translatory baz danych (Anki/Markdown Exporters):** Skrypty mapujące tabele, słowniki i hierarchie pojęciowe do formatów natywnie obsługiwanych przez zewnętrzne systemy powtórek interwałowych.
-
-### 2. Środowiska weryfikacji i symulatory logiczne (`/simulators`)
-Interaktywne aplikacje i narzędzia konsolowe (CLI) służące do obiektywnego testowania poziomu opanowania materiału.
-* **Adaptacyjne silniki testujące (Adaptive Testing Engines):** Algorytmy ważące trudność zagadnień w czasie rzeczywistym na podstawie historii błędów użytkownika (dynamiczna optymalizacja sesji powtórkowych).
-* **Symulatory sekwencji i procedur (Procedural Simulators):** Narzędzia weryfikujące poprawność chronologiczną, logiczną lub składniową wprowadzanych operacji (np. sprawdzanie poprawności kroków w złożonych procesach technologicznych, operacjach finansowych czy algorytmach).
-
-### 3. Ekstraktory esencji informacyjnej (`/parsers`)
-Narzędzia automatyzujące etap selekcji materiału według zasady Pareto (80/20).
-* **NLP Content Extractors:** Skrypty wykorzystujące podstawowe techniki przetwarzania języka naturalnego do identyfikacji klastrów pojęciowych najczęściej pojawiających się w analizowanych materiałach (automatyczne odrzucanie szumu informacyjnego).
+<img width="1651" height="922" alt="image" src="https://github.com/user-attachments/assets/a9628b45-9126-4397-9868-3a425bc65220" />
 
 ---
 
-## 🌐 Walidacja Uniwersalności (Przykłady Zastosowań)
+## 🛠️ Struktura Projektu
 
-Elastyczność architektury narzędzi została potwierdzona w testach produkcyjnych na skrajnie zróżnicowanych i wymagających wysokiej precyzji obszarach wiedzy:
+Katalog jest podzielony według funkcji, jakie pełnią poszczególne programy:
 
-* **Finanse i Księgowość:** Wykorzystanie parserów do błyskawicznej strukturyzacji i internalizacji planów kont, kodyfikacji podatkowych oraz międzynarodowych standardów rachunkowości.
-* **Handel Ilościowy i Programowanie:** Zastosowanie generatorów do przyspieszonej nauki składni zaawansowanych języków (MQL5, Python), struktur API oraz zaawansowanych modeli ekonometrycznych.
-* **Medycyna i Farmacja:** Użycie symulatorów sekwencji do opanowania nomenklatury chemicznej, interakcji substancji czynnych oraz restrykcyjnych procedur laboratoryjnych.
+### 1. Automatyczne tworzenie materiałów i fiszek (`/generators`)
+Skrypty, które zamieniają surowy tekst lub tabele w gotowe materiały do nauki.
+* **Parsery materiałów:** Narzędzia, które automatycznie wyciągają najważniejsze definicje i reguły z długich dokumentów, e-booków czy aktów prawnych.
+* **Generatory baz do Anki/Markdown:** Skrypty przenoszące ustrukturyzowane dane (np. słowniki, tabele) bezpośrednio do aplikacji do nauki fiszek (Anki) lub czystych notatek tekstowych.
+
+### 2. Symulatory i testy wiedzy (`/simulators`)
+Interaktywne narzędzia uruchamiane w konsoli, które służą do sprawdzania wiedzy w praktyce.
+* **Inteligentne testy:** Algorytmy, które dopasowują trudność pytań do użytkownika – częściej wyświetlają zagadnienia, w których popełniasz błędy, optymalizując czas nauki.
+* **Symulatory procedur:** Programy weryfikujące, czy poprawnie i w dobrej kolejności wykonujesz określone operacje (np. sekwencje działań w procesach technologicznych czy rozliczeniach).
+
+### 3. Narzędzia do wyciągania najważniejszych informacji (`/parsers`)
+Skrypty automatyzujące wybór kluczowego materiału według zasady Pareto (80/20).
+* **Ekstraktory tekstu (NLP):** Proste programy analizujące tekst w celu wyizolowania najistotniejszych pojęć i słów kluczowych, co pozwala odrzucić szum informacyjny.
+
+---
+
+## 🌐 Przykłady Zastosowania w Praktyce
+
+Elastyczność kodu została z powodzeniem przetestowana na skrajnie zróżnicowanych obszarach wiedzy:
+
+* **Księgowość i Finanse:** Szybka strukturyzacja i nauka planów kont, przepisów podatkowych oraz standardów rachunkowości.
+* **Handel Ilościowy i Kodowanie:** Przyspieszone zapamiętywanie składni języków programowania (MQL5, Python), formuł matematycznych oraz dokumentacji API giełd.
+* **Farmacja i Chemia:** Efektywna nauka nomenklatury chemicznej, interakcji substancji czynnych oraz restrykcyjnych procedur laboratoryjnych.
 
 ---
 
 ## 💻 Stack Technologiczny
 
 * **Języki programowania:** Python, Bash
-* **Formaty danych:** JSON, CSV, Markdown, XML
-* **Zastosowane metodologie:** Spaced Repetition (SuperMemo/Anki algorithm core), Active Recall Frameworks, Inżynieria Wiedzy
+* **Formaty danych:** JSON, CSV, Markdown
+* **Metody edukacyjne:** Spaced Repetition (system powtórek), Active Recall (aktywne testowanie)

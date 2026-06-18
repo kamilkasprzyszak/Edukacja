@@ -16,7 +16,7 @@ Aplikacja doskonale pokazuje w praktyce działanie metodologii *Active Recall* (
    * 🌾 Rolnictwo (np. grunty, ciągniki, stado podstawowe)
 
 2. **Wbudowane Zadanie Wzorcowe (Case Study)**
-   Aplikacja zawiera fabrycznie załadowane, klasyczne zadanie edukacyjne **MED-POL S.A. (Zadanie 1.1.11)**, które pozwala na natychmiastowy start i pracę na realnym, złożonym przykładzie szkoleniowym.
+   Aplikacja zawiera fabrycznie załadowane, klasyczne zadanie edukacyjne **MED-POL S.A.**, które pozwala na natychmiastowy start i pracę na realnym, złożonym przykładzie szkoleniowym.
 
 3. **Interaktywny Panel Klasyfikacji ("Wybierz i Upuść")**
    Użytkownik widzi listę wymieszanych pozycji bilansowych (majątku i zobowiązań). Jego zadaniem jest przypisanie każdej z nich do odpowiedniego folderu (np. *Rzeczowe aktywa trwałe*, *Zobowiązania krótkoterminowe* itp.) za pomocą intuicyjnych list wyboru.

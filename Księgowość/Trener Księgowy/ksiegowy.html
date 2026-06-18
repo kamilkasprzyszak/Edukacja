@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Księgowy Trener - Zaawansowany Generator Bilansów</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a; --card-bg: rgba(30, 41, 59, 0.7); --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --accent-assets: #38bdf8; --accent-liab: #f472b6;
+            --success: #34d399; --error: #f87171; --warning: #fbbf24;
+            --hover-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body {
+            background-color: var(--bg); color: var(--text-main); min-height: 100vh; padding: 1.5rem 2rem;
+            background-image: radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.05) 0%, transparent 50%),
+                              radial-gradient(circle at 85% 30%, rgba(244, 114, 182, 0.05) 0%, transparent 50%);
+        }
+
+        header { text-align: center; margin-bottom: 1.5rem; }
+        h1 { font-size: 2.2rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-assets), var(--accent-liab)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+        p.subtitle { color: var(--text-muted); font-size: 1rem; line-height: 1.4; }
+
+        .top-controls { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); max-width: 1000px; margin-left: auto; margin-right: auto;}
+
+        .container { display: grid; grid-template-columns: 380px 1fr 1fr; gap: 1.5rem; max-width: 1600px; margin: 0 auto; }
+
+        .panel {
+            background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            font-size: 1.1rem; font-weight: 700; padding-bottom: 0.8rem; border-bottom: 1px solid var(--card-border);
+            display: flex; justify-content: space-between; align-items: center; text-transform: uppercase;
+        }
+
+        .unassigned-list, .template-list { overflow-y: auto; max-height: 65vh; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 0.8rem;}
+        .unassigned-list::-webkit-scrollbar, .template-list::-webkit-scrollbar { width: 6px; }
+        .unassigned-list::-webkit-scrollbar-track, .template-list::-webkit-scrollbar-track { background: transparent; }
+        .unassigned-list::-webkit-scrollbar-thumb, .template-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .item-card { background: rgba(0, 0, 0, 0.3); border: 1px solid var(--card-border); border-radius: 8px; padding: 0.8rem; transition: all 0.2s; }
+        .item-card:hover { background: var(--hover-bg); border-color: rgba(255,255,255,0.3); }
+
+        .item-title { font-size: 0.85rem; margin-bottom: 0.6rem; color: #e2e8f0; line-height: 1.4;}
+        .item-controls-row { display: flex; justify-content: space-between; align-items: center; }
+
+        .main-cat { border: 1px solid var(--card-border); border-radius: 8px; background: rgba(0, 0, 0, 0.2); overflow: hidden; }
+        .main-cat-header { background: rgba(255, 255, 255, 0.08); padding: 0.6rem 0.8rem; font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; color: #f8fafc; border-bottom: 1px solid var(--card-border); }
+        .sub-cat { border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sub-cat:last-child { border-bottom: none; }
+        .sub-cat-header { padding: 0.4rem 0.8rem 0.4rem 1.5rem; font-weight: 500; font-size: 0.85rem; color: #cbd5e1; display: flex; justify-content: space-between; background: rgba(0, 0, 0, 0.15); }
+
+        .assigned-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.8rem 0.4rem 2.5rem;
+            font-size: 0.8rem; background: rgba(255, 255, 255, 0.02); border-top: 1px dashed rgba(255,255,255,0.08);
+            color: #94a3b8; transition: all 0.2s;
+        }
+        .assigned-item:hover { background: rgba(255, 255, 255, 0.06); color: #e2e8f0; }
+
+        .assigned-name { flex: 1; padding-right: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .assigned-controls { display: flex; align-items: center; gap: 0.8rem; }
+
+        .remove-btn { background: transparent; border: none; color: var(--error); cursor: pointer; font-size: 1rem; opacity: 0.6; padding: 0 4px; }
+        .remove-btn:hover { opacity: 1; }
+
+        select { background: rgba(15, 23, 42, 0.9); color: var(--text-main); border: 1px solid var(--card-border); padding: 0.5rem; border-radius: 6px; font-size: 0.85rem; outline: none; cursor: pointer; width: 100%; transition: border-color 0.2s; }
+        select:focus { border-color: var(--accent-assets); }
+        optgroup { font-weight: 700; background: #0f172a; color: #38bdf8; }
+
+        input[type="number"] { background: rgba(15, 23, 42, 0.9); color: #fff; border: 1px solid var(--accent-liab); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.85rem; width: 100px; text-align: right; outline: none; }
+        input[type="number"]:focus { border-color: var(--accent-assets); }
+        .mini-input { width: 85px; padding: 0.2rem; font-size: 0.8rem; }
+
+        .item-value, .sum-value { font-family: monospace; font-weight: 600; }
+        .item-value { background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.95rem;}
+
+        .sum-row { display: flex; justify-content: space-between; padding: 1rem; background: rgba(0,0,0,0.4); border-radius: 8px; font-weight: 700; margin-top: 1rem; border: 1px solid var(--card-border); font-size: 1.1rem; }
+        .sum-assets { color: var(--accent-assets); border-color: rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.05); }
+        .sum-liab { color: var(--accent-liab); border-color: rgba(244, 114, 182, 0.3); background: rgba(244, 114, 182, 0.05); }
+
+        .status-bar { grid-column: 1 / -1; background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.2rem; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
+        .status-info { display: flex; align-items: center; gap: 2rem; font-weight: 600; font-size: 1.1rem;}
+        .status-match { color: var(--success); display: flex; align-items: center; gap: 0.5rem; }
+        .status-error { color: var(--error); display: flex; align-items: center; gap: 0.5rem; }
+
+        .btn { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500; font-size: 0.95rem; }
+        .btn:hover { background: rgba(255,255,255,0.15); }
+        .btn-primary { background: rgba(56, 189, 248, 0.1); color: var(--accent-assets); border-color: rgba(56, 189, 248, 0.3); }
+        .btn-primary:hover { background: rgba(56, 189, 248, 0.2); }
+        .btn-success { background: rgba(52, 211, 153, 0.1); color: var(--success); border-color: rgba(52, 211, 153, 0.3); }
+        .btn-success:hover { background: rgba(52, 211, 153, 0.2); }
+        .btn-warning { background: rgba(251, 191, 36, 0.1); color: var(--warning); border-color: rgba(251, 191, 36, 0.3); }
+        .btn-warning:hover { background: rgba(251, 191, 36, 0.2); }
+
+        @media (max-width: 1200px) { .container { grid-template-columns: 1fr; } .status-bar { flex-direction: column; gap: 1rem; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Księgowy Trener</h1>
+        <p class="subtitle" id="task-subtitle"> MED-POL S.A.</p>
+        
+        <div class="top-controls">
+            <button class="btn" onclick="loadMedPol()">📚 Oryginalne MED-POL S.A.</button>
+            <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.1);"></div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <select id="sector-selector" style="max-width: 220px; border-color: rgba(56, 189, 248, 0.3);">
+                    <option value="random">🌍 Wszystkie branże</option>
+                    <option value="produkcja">🏭 Branża Produkcyjna</option>
+                    <option value="handel">🛒 Handel / E-commerce</option>
+                    <option value="it">💻 IT / Usługi Cyfrowe</option>
+                    <option value="rolnictwo">🌾 Rolnictwo</option>
+                </select>
+                <button class="btn btn-primary" onclick="generateRandomTask()">🎲 Generuj Zadanie</button>
+            </div>
+            <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.1);"></div>
+            <button class="btn btn-warning" onclick="checkErrors()">🔍 Sprawdź Błędy</button>
+        </div>
+    </header>
+
+    <div class="container" id="app">
+        <!-- Rendered by JS -->
+    </div>
+
+    <script>
+        const categoriesMap = {
+            'A_I': { dropName: 'A.I. Wartości niematerialne i prawne', treeName: 'I. Wartości niematerialne i prawne', type: 'aktywa' },
+            'A_II': { dropName: 'A.II. Rzeczowe aktywa trwałe', treeName: 'II. Rzeczowe aktywa trwałe', type: 'aktywa' },
+            'A_III': { dropName: 'A.III. Należności długoterminowe', treeName: 'III. Należności długoterminowe', type: 'aktywa' },
+            'A_IV': { dropName: 'A.IV. Inwestycje długoterminowe', treeName: 'IV. Inwestycje długoterminowe', type: 'aktywa' },
+            'A_V': { dropName: 'A.V. Długoterminowe rozliczenia', treeName: 'V. Długoterminowe rozliczenia', type: 'aktywa' },
+            'B_I': { dropName: 'B.I. Zapasy', treeName: 'I. Zapasy', type: 'aktywa' },
+            'B_II': { dropName: 'B.II. Należności krótkoterminowe', treeName: 'II. Należności krótkoterminowe', type: 'aktywa' },
+            'B_III': { dropName: 'B.III. Inwestycje krótkoterminowe', treeName: 'III. Inwestycje krótkoterminowe', type: 'aktywa' },
+            'B_IV': { dropName: 'B.IV. Krótkoterminowe rozliczenia', treeName: 'IV. Krótkoterminowe rozliczenia', type: 'aktywa' },
+            'C': { dropName: 'C. Należne wpłaty na kapitał', treeName: 'C. Należne wpłaty na kapitał (fundusz)', type: 'aktywa' },
+            'D': { dropName: 'D. Udziały (akcje) własne', treeName: 'D. Udziały (akcje) własne', type: 'aktywa' },
+            
+            'PA_I': { dropName: 'A.I. Kapitał podstawowy', treeName: 'I. Kapitał (fundusz) podstawowy', type: 'pasywa' },
+            'PA_II': { dropName: 'A.II. Kapitał zapasowy', treeName: 'II. Kapitał (fundusz) zapasowy', type: 'pasywa' },
+            'PA_III': { dropName: 'A.III. Kapitał z aktualizacji', treeName: 'III. Kapitał (fundusz) z aktualizacji', type: 'pasywa' },
+            'PA_IV': { dropName: 'A.IV. Pozostałe kapitały', treeName: 'IV. Pozostałe kapitały (fundusze)', type: 'pasywa' },
+            'PA_V': { dropName: 'A.V. Zysk z lat ubiegłych', treeName: 'V. Zysk (strata) z lat ubiegłych', type: 'pasywa' },
+            'PA_VI': { dropName: 'A.VI. Zysk netto', treeName: 'VI. Zysk (strata) netto', type: 'pasywa' },
+            'PA_VII': { dropName: 'A.VII. Odpisy z zysku netto', treeName: 'VII. Odpisy z zysku netto w ciągu roku', type: 'pasywa' },
+            
+            'PB_I': { dropName: 'B.I. Rezerwy na zobowiązania', treeName: 'I. Rezerwy na zobowiązania', type: 'pasywa' },
+            'PB_II': { dropName: 'B.II. Zobowiązania długoterminowe', treeName: 'II. Zobowiązania długoterminowe', type: 'pasywa' },
+            'PB_III': { dropName: 'B.III. Zobowiązania krótkoterminowe', treeName: 'III. Zobowiązania krótkoterminowe', type: 'pasywa' },
+            'PB_IV': { dropName: 'B.IV. Rozliczenia międzyokresowe', treeName: 'IV. Rozliczenia międzyokresowe', type: 'pasywa' }
+        };
+
+        const aktywaTree = [
+            { id: 'A', title: 'A. Aktywa trwałe', subs: ['A_I', 'A_II', 'A_III', 'A_IV', 'A_V'] },
+            { id: 'B', title: 'B. Aktywa obrotowe', subs: ['B_I', 'B_II', 'B_III', 'B_IV'] },
+            { id: 'C', title: 'C. Należne wpłaty na kapitał (fundusz)', subs: ['C'] },
+            { id: 'D', title: 'D. Udziały (akcje) własne', subs: ['D'] }
+        ];
+
+        const pasywaTree = [
+            { id: 'PA', title: 'A. Kapitał (fundusz) własny', subs: ['PA_I', 'PA_II', 'PA_III', 'PA_IV', 'PA_V', 'PA_VI', 'PA_VII'] },
+            { id: 'PB', title: 'B. Zobowiązania i rezerwy', subs: ['PB_I', 'PB_II', 'PB_III', 'PB_IV'] }
+        ];
+
+        // --- BOGATA BAZA DANYCH DO GENERATORA ---
+        const companyNames = {
+            'produkcja': ["STEEL-POL S.A.", "Fabryka Mebli 'DREW-STYL' sp. z o.o.", "Auto-Parts S.A.", "Huta Szkła 'Kryształ' S.A."],
+            'handel': ["SuperMarket POLSKA S.A.", "Hurtownia Budowlana 'CEGŁA'", "E-Commerce 'Tech-Shop' sp z o.o.", "Sieć Odzieżowa 'Styl-Butik'"],
+            'it': ["CloudTech S.A.", "Software House 'CodeMasters'", "CyberSecurity 'SafeNet'", "Agencja Interaktywna 'PixelStudio'"],
+            'rolnictwo': ["Farma 'ZŁOTY KŁOS' S.A.", "Mleczarnia 'BIAŁA' sp z o.o.", "Gospodarstwo Rolne 'Agro-Pol'", "Sady 'Jabłuszko' S.A."]
+        };
+
+        const richAssetPool = [
+            // UNIWERSALNE - A_I
+            { name: "Licencje na oprogramowanie biurowe i ERP", cat: "A_I", min: 5, max: 30, sectors: ["all"] },
+            { name: "Nabyta technologia know-how", cat: "A_I", min: 10, max: 100, sectors: ["produkcja", "it"] },
+            { name: "Prawa autorskie do kodu źródłowego", cat: "A_I", min: 50, max: 300, sectors: ["it"] },
+            // UNIWERSALNE - A_II
+            { name: "Budynek biurowy zarządu", cat: "A_II", min: 100, max: 500, sectors: ["all"] },
+            { name: "Meble biurowe i sprzęt komputerowy", cat: "A_II", min: 10, max: 50, sectors: ["all"] },
+            { name: "Środki transportu (flota dla przedstawicieli)", cat: "A_II", min: 40, max: 150, sectors: ["all"] },
+            // SPECYFICZNE - A_II
+            { name: "Hala produkcyjna z linią montażową", cat: "A_II", min: 300, max: 1200, sectors: ["produkcja"] },
+            { name: "Maszyny i urządzenia produkcyjne", cat: "A_II", min: 100, max: 600, sectors: ["produkcja"] },
+            { name: "Budynek sklepu wielkopowierzchniowego", cat: "A_II", min: 400, max: 2000, sectors: ["handel"] },
+            { name: "Wózki widłowe i wyposażenie magazynu", cat: "A_II", min: 20, max: 80, sectors: ["handel", "produkcja"] },
+            { name: "Szafy serwerowe i macierze dyskowe", cat: "A_II", min: 50, max: 400, sectors: ["it"] },
+            { name: "Grunty rolne pod uprawę", cat: "A_II", min: 200, max: 1000, sectors: ["rolnictwo"] },
+            { name: "Ciągniki rolnicze i kombajny", cat: "A_II", min: 100, max: 500, sectors: ["rolnictwo"] },
+            { name: "Stado podstawowe (krowy mleczne)", cat: "A_II", min: 50, max: 200, sectors: ["rolnictwo"] },
+            // A_III, A_IV, A_V
+            { name: "Należności długoterminowe od spółki córki", cat: "A_III", min: 20, max: 100, sectors: ["all"] },
+            { name: "Akcje spółki giełdowej (inwestycja pow. 1 roku)", cat: "A_IV", min: 10, max: 80, sectors: ["all"] },
+            { name: "Długoterminowa kaucja za wynajem lokalu", cat: "A_V", min: 2, max: 15, sectors: ["all"] },
+            // ZAPASY - B_I
+            { name: "Materiały biurowe w magazynie", cat: "B_I", min: 1, max: 5, sectors: ["all"] },
+            { name: "Materiały do produkcji (surowce i blachy)", cat: "B_I", min: 20, max: 150, sectors: ["produkcja"] },
+            { name: "Produkty gotowe czekające na wydanie", cat: "B_I", min: 30, max: 200, sectors: ["produkcja", "rolnictwo"] },
+            { name: "Towary handlowe przeznaczone do sprzedaży", cat: "B_I", min: 50, max: 400, sectors: ["handel"] },
+            { name: "Zbiory w silosach (zboże)", cat: "B_I", min: 30, max: 150, sectors: ["rolnictwo"] },
+            { name: "Nawozy sztuczne i nasiona", cat: "B_I", min: 10, max: 50, sectors: ["rolnictwo"] },
+            { name: "Półprodukty i produkcja w toku", cat: "B_I", min: 15, max: 80, sectors: ["produkcja", "it"] },
+            // NALEŻNOŚCI I INWESTYCJE B_II, B_III
+            { name: "Należności od odbiorców (termin do 30 dni)", cat: "B_II", min: 20, max: 250, sectors: ["all"] },
+            { name: "Należności z tytułu nadpłaty podatku VAT", cat: "B_II", min: 5, max: 40, sectors: ["all"] },
+            { name: "Środki pieniężne na rachunku bieżącym", cat: "B_III", min: 30, max: 300, sectors: ["all"] },
+            { name: "Gotówka w kasie firmowej", cat: "B_III", min: 2, max: 20, sectors: ["all"] },
+            { name: "Lokaty bankowe (3-miesięczne)", cat: "B_III", min: 10, max: 100, sectors: ["all"] }
+        ];
+
+        const richLiabPool = [
+            // KAPITAŁY (poza podst)
+            { name: "Kapitał zapasowy", cat: "PA_II", min: 20, max: 300, sectors: ["all"] },
+            { name: "Kapitał z aktualizacji wyceny środków trwałych", cat: "PA_III", min: 5, max: 80, sectors: ["all"] },
+            { name: "Zysk z lat ubiegłych (niepodzielony)", cat: "PA_V", min: 10, max: 100, sectors: ["all"] },
+            { name: "Zysk netto wypracowany w bieżącym roku", cat: "PA_VI", min: 15, max: 150, sectors: ["all"] },
+            // REZERWY - PB_I
+            { name: "Rezerwy na świadczenia emerytalne i podobne", cat: "PB_I", min: 10, max: 50, sectors: ["all"] },
+            { name: "Rezerwy na koszty napraw gwarancyjnych", cat: "PB_I", min: 5, max: 40, sectors: ["produkcja", "handel"] },
+            { name: "Rezerwy na przewidywane kary umowne w projektach", cat: "PB_I", min: 5, max: 20, sectors: ["it"] },
+            // DŁUGOTERMINOWE - PB_II
+            { name: "Kredyt bankowy inwestycyjny (termin 5 lat)", cat: "PB_II", min: 100, max: 600, sectors: ["all"] },
+            { name: "Wyemitowane obligacje korporacyjne", cat: "PB_II", min: 50, max: 300, sectors: ["all"] },
+            { name: "Długoterminowe pożyczki od udziałowców", cat: "PB_II", min: 20, max: 150, sectors: ["all"] },
+            // KRÓTKOTERMINOWE - PB_III
+            { name: "Zobowiązania wobec dostawców (niezapłacone faktury)", cat: "PB_III", min: 30, max: 200, sectors: ["all"] },
+            { name: "Zobowiązania wobec pracowników z tyt. wynagrodzeń", cat: "PB_III", min: 10, max: 80, sectors: ["all"] },
+            { name: "Zobowiązania z tytułu ubezpieczeń społecznych (ZUS)", cat: "PB_III", min: 5, max: 30, sectors: ["all"] },
+            { name: "Zobowiązania z tytułu podatku dochodowego (CIT)", cat: "PB_III", min: 5, max: 40, sectors: ["all"] },
+            { name: "Weksel własny (termin realizacji 3 miesiące)", cat: "PB_III", min: 5, max: 25, sectors: ["all"] },
+            { name: "Krótkoterminowy kredyt w rachunku bieżącym", cat: "PB_III", min: 20, max: 100, sectors: ["all"] },
+            // MIĘDZYOKRESOWE - PB_IV
+            { name: "Przychody przyszłych okresów (opłacone z góry abonamenty)", cat: "PB_IV", min: 5, max: 40, sectors: ["it", "handel", "produkcja"] },
+            { name: "Dotacje rządowe otrzymane na zakup maszyn", cat: "PB_IV", min: 20, max: 100, sectors: ["produkcja", "rolnictwo"] }
+        ];
+
+        // --- ORYGINALNE ZADANIE ---
+        const medPolData = [
+            { id: 1, name: "Budynek produkcyjny i magazyn", value: 300000, category: "unassigned", correctCategory: "A_II" },
+            { id: 2, name: "Zobowiązania z tytułu dostaw (do 12 miesięcy)", value: 56500, category: "unassigned", correctCategory: "PB_III" },
+            { id: 3, name: "Elementy składowe do produkcji sprzętu medycznego", value: 24000, category: "unassigned", correctCategory: "B_I" },
+            { id: 4, name: "Należności z tytułu dostaw (do 12 miesięcy)", value: 39300, category: "unassigned", correctCategory: "B_II" },
+            { id: 5, name: "Linia produkcyjna", value: 20400, category: "unassigned", correctCategory: "A_II" },
+            { id: 6, name: "Nabyta technologia know-how", value: 13800, category: "unassigned", correctCategory: "A_I" },
+            { id: 7, name: "Należności z tytułu dostaw powyżej 12 miesięcy", value: 30000, category: "unassigned", correctCategory: "A_III" },
+            { id: 8, name: "Części zamienne do linii produkcyjnej", value: 1600, category: "unassigned", correctCategory: "B_I" },
+            { id: 9, name: "Opakowania do sprzętu medycznego", value: 400, category: "unassigned", correctCategory: "B_I" },
+            { id: 10, name: "Środki pieniężne na rachunku bieżącym", value: 30000, category: "unassigned", correctCategory: "B_III" },
+            { id: 11, name: "Meble biurowe", value: 14200, category: "unassigned", correctCategory: "A_II" },
+            { id: 12, name: "Budynek administracyjny w budowie", value: 27900, category: "unassigned", correctCategory: "A_II" },
+            { id: 13, name: "Sprzęt medyczny w magazynie", value: 56000, category: "unassigned", correctCategory: "B_I" },
+            { id: 14, name: "Kredyt bankowy cz. długoterminowa", value: 176000, category: "unassigned", correctCategory: "PB_II" },
+            { id: 15, name: "Kredyt bankowy cz. krótkoterminowa (do 12 mies.)", value: 48000, category: "unassigned", correctCategory: "PB_III" },
+            { id: 16, name: "Grunt, na którym znajduje się budynek", value: 120000, category: "unassigned", correctCategory: "A_II" },
+            { id: 17, name: "Naliczone i niewypłacone wynagrodzenia", value: 8200, category: "unassigned", correctCategory: "PB_III" },
+            { id: 18, name: "Kapitał zapasowy", value: 14000, category: "unassigned", correctCategory: "PA_II" },
+            { id: 19, name: "Grunt nabyty w celach inwestycyjnych", value: 20000, category: "unassigned", correctCategory: "A_IV" },
+            { id: 20, name: "Akcje spółki „TELEFON S.A.” (długoterminowe)", value: 3600, category: "unassigned", correctCategory: "A_IV" },
+            { id: 21, name: "Zespoły komputerowe w dziale projektowym", value: 28000, category: "unassigned", correctCategory: "A_II" },
+            { id: 22, name: "Oprogramowanie komputerów", value: 13000, category: "unassigned", correctCategory: "A_I" },
+            { id: 23, name: "Naliczone i niezapłacone składki ZUS", value: 1700, category: "unassigned", correctCategory: "PB_III" },
+            { id: 24, name: "Zysk netto osiągnięty w bieżącym roku", value: 42500, category: "unassigned", correctCategory: "PA_VI" },
+            { id: 25, name: "Pożyczka udzielona spółce (spłata za 6 mies.)", value: 10000, category: "unassigned", correctCategory: "B_III" },
+            { id: 26, name: "Zobowiązania z tytułu PIT", value: 1400, category: "unassigned", correctCategory: "PB_III" },
+            { id: 27, name: "Zobowiązania z tytułu CIT", value: 4400, category: "unassigned", correctCategory: "PB_III" },
+            { id: 28, name: "Weksel obcy (termin 30 dni)", value: 5000, category: "unassigned", correctCategory: "B_III" },
+            { id: 29, name: "Weksel własny (termin 6 miesięcy)", value: 4500, category: "unassigned", correctCategory: "PB_III" },
+            { id: 30, name: "Kapitał podstawowy", value: 0, category: "unassigned", correctCategory: "PA_I", isMissing: true }
+        ];
+
+        let state = [];
+        let baseData = JSON.parse(JSON.stringify(medPolData));
+        let showErrors = false;
+
+        const formatCurrency = (val) => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 }).format(val);
+
+        const updateState = (id, field, value) => {
+            const item = state.find(i => i.id === id);
+            if (item) {
+                if (field === 'value') item[field] = Number(value) || 0;
+                else item[field] = value;
+                showErrors = false;
+                render();
+            }
+        };
+
+        const resetState = () => { 
+            state = JSON.parse(JSON.stringify(baseData)); 
+            showErrors = false;
+            render(); 
+        };
+
+        const loadMedPol = () => {
+            document.getElementById('task-subtitle').innerHTML = " MED-POL S.A.<br><span style='font-size: 0.9rem; color: var(--accent-assets)'>Oryginalne zadanie edukacyjne</span>";
+            baseData = JSON.parse(JSON.stringify(medPolData));
+            resetState();
+        };
+
+        const generateRandomTask = () => {
+            const sectorSelect = document.getElementById('sector-selector').value;
+            const sectorsList = ['produkcja', 'handel', 'it', 'rolnictwo'];
+            const targetSector = sectorSelect === 'random' ? sectorsList[Math.floor(Math.random() * sectorsList.length)] : sectorSelect;
+
+            const companyName = companyNames[targetSector][Math.floor(Math.random() * companyNames[targetSector].length)];
+
+            const availableAssets = richAssetPool.filter(i => i.sectors.includes("all") || i.sectors.includes(targetSector));
+            const availableLiabs = richLiabPool.filter(i => i.sectors.includes("all") || i.sectors.includes(targetSector));
+
+            const numAssets = Math.floor(Math.random() * 6) + 9;  // 9-14 aktywów
+            const numLiabs = Math.floor(Math.random() * 5) + 7;   // 7-11 pasywów (poza kap. podst.)
+
+            const shuffledAssets = availableAssets.sort(() => 0.5 - Math.random()).slice(0, numAssets);
+            const shuffledLiabs = availableLiabs.sort(() => 0.5 - Math.random()).slice(0, numLiabs);
+
+            let newItems = [];
+            let sumAssets = 0, sumLiabs = 0;
+
+            shuffledAssets.forEach(item => {
+                const val = (Math.floor(Math.random() * (item.max - item.min + 1)) + item.min) * 1000;
+                sumAssets += val;
+                newItems.push({ name: item.name, value: val, category: "unassigned", correctCategory: item.cat });
+            });
+
+            shuffledLiabs.forEach(item => {
+                const val = (Math.floor(Math.random() * (item.max - item.min + 1)) + item.min) * 1000;
+                sumLiabs += val;
+                newItems.push({ name: item.name, value: val, category: "unassigned", correctCategory: item.cat });
+            });
+
+            // Gwarancja że Aktywa > Pasywa aby Kapitał był dodatni (rezerwa ok. 50k - 200k)
+            if (sumLiabs >= sumAssets) {
+                const diff = sumLiabs - sumAssets;
+                const extra = (Math.floor(Math.random() * 150) + 50) * 1000;
+                newItems[0].value += (diff + extra);
+                sumAssets += (diff + extra);
+            }
+
+            newItems.push({ name: "Kapitał podstawowy", value: 0, category: "unassigned", correctCategory: "PA_I", isMissing: true });
+
+            newItems = newItems.sort(() => 0.5 - Math.random());
+            newItems.forEach((item, idx) => item.id = idx + 1);
+
+            baseData = JSON.parse(JSON.stringify(newItems));
+            
+            const sectorDisplayNames = {
+                'produkcja': '🏭 Przemysł i Produkcja', 'handel': '🛒 Handel i Dystrybucja', 'it': '💻 Usługi IT', 'rolnictwo': '🌾 Sektor Rolniczy'
+            };
+
+            document.getElementById('task-subtitle').innerHTML = `Zadanie Wygenerowane Losowo<br><span style='font-size: 1.1rem; color: #fff;'>Firma: <b>${companyName}</b> (${sectorDisplayNames[targetSector]})</span>`;
+            resetState();
+        };
+
+        const checkErrors = () => {
+            showErrors = true;
+            render();
+        };
+
+        const generateSelect = (itemId, currentCat) => {
+            let html = `<select onchange="updateState(${itemId}, 'category', this.value)">`;
+            html += `<option value="unassigned" ${currentCat === 'unassigned' ? 'selected' : ''}>Wybierz folder...</option>`;
+            
+            html += `<optgroup label="--- AKTYWA ---">`;
+            Object.keys(categoriesMap).filter(k => categoriesMap[k].type === 'aktywa').forEach(k => {
+                html += `<option value="${k}" ${currentCat === k ? 'selected' : ''}>${categoriesMap[k].dropName}</option>`;
+            });
+            html += `</optgroup><optgroup label="--- PASYWA ---">`;
+            Object.keys(categoriesMap).filter(k => categoriesMap[k].type === 'pasywa').forEach(k => {
+                html += `<option value="${k}" ${currentCat === k ? 'selected' : ''}>${categoriesMap[k].dropName}</option>`;
+            });
+            html += `</optgroup></select>`;
+            return html;
+        };
+
+        const renderAssignedItem = (item) => {
+            const hasError = showErrors && item.category !== 'unassigned' && item.category !== item.correctCategory;
+            const errorStyle = hasError ? `border-left: 4px solid var(--error); background: rgba(248, 113, 113, 0.1);` : ``;
+            
+            const valInput = item.isMissing 
+                ? `<input type="number" class="mini-input" value="${item.value || ''}" placeholder="..." onchange="updateState(${item.id}, 'value', this.value)" onkeyup="updateState(${item.id}, 'value', this.value)">`
+                : `<span class="sum-value" style="font-size:0.85rem">${formatCurrency(item.value)}</span>`;
+
+            return `
+                <div class="assigned-item" style="${errorStyle}">
+                    <div class="assigned-name" title="${item.name}"><strong>${item.id}.</strong> ${item.name}</div>
+                    <div class="assigned-controls">
+                        ${hasError ? `<span style="color:var(--error); font-size: 14px; font-weight: bold;" title="Błędna kategoria!">⚠</span>` : ''}
+                        ${valInput}
+                        <button class="remove-btn" onclick="updateState(${item.id}, 'category', 'unassigned')" title="Usuń z przypisania">✖</button>
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderTree = (treeStructure) => {
+            let html = '';
+            let totalSum = 0;
+            
+            treeStructure.forEach(mainCat => {
+                let mainCatSum = 0;
+                let subsHtml = '';
+                
+                mainCat.subs.forEach(subId => {
+                    const subItems = state.filter(i => i.category === subId);
+                    const subSum = subItems.reduce((acc, val) => acc + (val.value || 0), 0);
+                    mainCatSum += subSum;
+                    
+                    if (subId !== mainCat.id) {
+                        subsHtml += `
+                            <div class="sub-cat">
+                                <div class="sub-cat-header">
+                                    <span>${categoriesMap[subId].treeName}</span>
+                                    <span class="sum-value">${formatCurrency(subSum)}</span>
+                                </div>
+                                <div class="sub-cat-items">${subItems.map(renderAssignedItem).join('')}</div>
+                            </div>
+                        `;
+                    } else {
+                        subsHtml += `<div class="sub-cat-items">${subItems.map(renderAssignedItem).join('')}</div>`;
+                    }
+                });
+                
+                totalSum += mainCatSum;
+                html += `
+                    <div class="main-cat">
+                        <div class="main-cat-header">
+                            <span>${mainCat.title}</span>
+                            <span class="sum-value">${formatCurrency(mainCatSum)}</span>
+                        </div>
+                        ${subsHtml}
+                    </div>
+                `;
+            });
+            return { html, totalSum };
+        };
+
+        const calculateMissingValue = () => {
+            const missingItem = state.find(i => i.isMissing);
+            if (!missingItem) return;
+
+            if (missingItem.category === 'unassigned') {
+                alert("Przypisz najpierw 'Kapitał podstawowy' do poprawnej kategorii (A.I. Kapitał podstawowy w Pasywach)!");
+                return;
+            }
+
+            const tempVal = missingItem.value;
+            missingItem.value = 0;
+            
+            let aktywa = 0, pasywa = 0;
+            state.forEach(item => {
+                if (item.category !== 'unassigned') {
+                    if (categoriesMap[item.category].type === 'aktywa') aktywa += item.value || 0;
+                    if (categoriesMap[item.category].type === 'pasywa') pasywa += item.value || 0;
+                }
+            });
+            
+            let targetValue = categoriesMap[missingItem.category].type === 'pasywa' ? aktywa - pasywa : pasywa - aktywa;
+
+            if (targetValue > 0) {
+                missingItem.value = targetValue;
+                render();
+            } else {
+                missingItem.value = tempVal;
+                alert("Suma przeciwnej strony bilansu jest mniejsza. Prawdopodobnie jakiś element został błędnie przypisany!");
+            }
+        };
+
+        const render = () => {
+            const app = document.getElementById('app');
+            const unassignedItems = state.filter(i => i.category === 'unassigned');
+            
+            const aktywaData = renderTree(aktywaTree);
+            const pasywaData = renderTree(pasywaTree);
+            
+            const isBalanced = aktywaData.totalSum > 0 && aktywaData.totalSum === pasywaData.totalSum && unassignedItems.length === 0;
+
+            app.innerHTML = `
+                <!-- Kolumna 1: Nieprzypisane -->
+                <div class="panel">
+                    <div class="panel-header">Do rozpisania
+                        <span style="font-size: 0.8rem; background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 12px; font-weight: normal; color: var(--text-muted)">
+                            Pozostało: ${unassignedItems.length}
+                        </span>
+                    </div>
+                    <div class="unassigned-list">
+                        ${unassignedItems.map(item => `
+                            <div class="item-card">
+                                <div class="item-title"><strong>${item.id}.</strong> ${item.name}</div>
+                                <div class="item-controls-row">
+                                    ${item.isMissing 
+                                        ? `<input type="number" class="mini-input" value="${item.value || ''}" placeholder="...?" onchange="updateState(${item.id}, 'value', this.value)" onkeyup="updateState(${item.id}, 'value', this.value)">`
+                                        : `<span class="item-value">${formatCurrency(item.value)}</span>`
+                                    }
+                                </div>
+                                <div style="margin-top: 0.5rem">${generateSelect(item.id, item.category)}</div>
+                            </div>
+                        `).join('')}
+                        ${unassignedItems.length === 0 ? `
+                            <div style="text-align: center; color: var(--success); padding: 2rem; background: rgba(52, 211, 153, 0.05); border-radius: 8px; border: 1px dashed var(--success); margin-top: 2rem;">
+                                Wszystko pogrupowane! Sprawdź czy bilans się zgadza.
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Kolumna 2: Aktywa -->
+                <div class="panel" style="border-top: 4px solid var(--accent-assets)">
+                    <div class="panel-header">AKTYWA</div>
+                    <div class="template-list">${aktywaData.html}</div>
+                    <div style="margin-top: auto;">
+                        <div class="sum-row sum-assets">
+                            <span>Aktywa razem</span>
+                            <span>${formatCurrency(aktywaData.totalSum)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kolumna 3: Pasywa -->
+                <div class="panel" style="border-top: 4px solid var(--accent-liab)">
+                    <div class="panel-header">PASYWA</div>
+                    <div class="template-list">${pasywaData.html}</div>
+                    <div style="margin-top: auto;">
+                        <div class="sum-row sum-liab">
+                            <span>Pasywa razem</span>
+                            <span>${formatCurrency(pasywaData.totalSum)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pasek Statusu -->
+                <div class="status-bar">
+                    <div class="status-info">
+                        <div>Równowaga: <span class="${isBalanced ? 'status-match' : 'status-error'}">${isBalanced ? '✔ ZBILANSOWANY' : '✖ NIEZBILANSOWANY'}</span></div>
+                        ${!isBalanced && aktywaData.totalSum > 0 && pasywaData.totalSum > 0 ? `
+                            <div style="font-size: 1rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                                Różnica: <b style="color: var(--error);">${formatCurrency(Math.abs(aktywaData.totalSum - pasywaData.totalSum))}</b>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-success" onclick="calculateMissingValue()">Oblicz brakującą wartość</button>
+                        <button class="btn" onclick="resetState()">Wyczyść formularz</button>
+                    </div>
+                </div>
+            `;
+        };
+
+        loadMedPol(); // Uruchomienie na starcie
+    </script>
+</body>
+</html>

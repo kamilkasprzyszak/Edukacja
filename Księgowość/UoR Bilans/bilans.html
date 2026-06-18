@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyszukiwarka Pozycji Bilansowych - UoR</title>
+    <style>
+        :root {
+            --bg-color: #fdf6e3;
+            --container-bg: #ffffff;
+            --primary-color: #ff6b6b;
+            --accent-color: #4ecdc4;
+            --text-color: #2d3436;
+            --highlight: #ffeaa7;
+            --select-bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            max-width: 900px;
+            width: 100%;
+            border-top: 8px solid var(--accent-color);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #636e72;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        select.form-select {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px;
+            font-size: 15px;
+            border: 2px solid #dfe6e9;
+            border-radius: 8px;
+            background-color: var(--select-bg);
+            color: var(--text-color);
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select.form-select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .search-box {
+            flex: 2;
+            min-width: 300px;
+            padding: 15px;
+            font-size: 15px;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .search-box:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(255, 107, 107, 0.3);
+        }
+
+        .bilans-tree {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+
+        .bilans-tree ul {
+            list-style-type: none;
+            padding-left: 25px;
+            border-left: 2px dashed #dfe6e9;
+            margin-top: 5px;
+        }
+
+        .bilans-tree li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .item-label {
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            display: inline-block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .highlight {
+            background-color: var(--highlight);
+            font-weight: bold;
+            color: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        /* Hierarchia wizualna */
+        .level-0 > .item-label { font-weight: 800; font-size: 1.3em; color: #2d3436; text-transform: uppercase; margin-top: 15px; }
+        .level-1 > .item-label { font-weight: 700; color: var(--primary-color); font-size: 1.1em; }
+        .level-2 > .item-label { font-weight: 600; color: #0984e3; }
+        .level-3 > .item-label { color: #2d3436; font-weight: 500; }
+        .level-4 > .item-label { color: #636e72; font-size: 0.95em; }
+
+        .no-results {
+            text-align: center;
+            color: #d63031;
+            font-weight: bold;
+            padding: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Baza Kont UoR</h1>
+    <p class="subtitle">Interaktywny Bilans: Załączniki 1 - 5</p>
+    
+    <div class="controls">
+        <select id="zalacznikSelect" class="form-select" onchange="changeZalacznik()">
+            <option value="z1">Załącznik 1: Jednostki Inne</option>
+            <option value="z2">Załącznik 2: Banki</option>
+            <option value="z3">Załącznik 3: Zakłady Ubezpieczeń</option>
+            <option value="z4" selected>Załącznik 4: Jednostki Mikro</option>
+            <option value="z5">Załącznik 5: Jednostki Małe</option>
+        </select>
+        
+        <input type="text" id="searchInput" class="search-box" placeholder="Szukaj (np. rezerwy, aktywa obrotowe)..." onkeyup="filterTree()">
+    </div>
+    
+    <div id="noResults" class="no-results">Brak wyników dla wpisanego hasła w wybranym załączniku.</div>
+    <ul id="bilansRoot" class="bilans-tree">
+        </ul>
+</div>
+
+<script>
+    // Pełna struktura danych ze wszystkich załączników UoR
+    const db = {
+        "z1": [ // Jednostki Inne
+            {
+                name: "AKTYWA", children: [
+                    { name: "A. Aktywa trwałe", children: [
+                        { name: "I. Wartości niematerialne i prawne" },
+                        { name: "II. Rzeczowe aktywa trwałe", children: [
+                            { name: "1. Środki trwałe", children: [
+                                { name: "a) grunty (w tym prawo użytkowania wieczystego gruntu)" },
+                                { name: "b) budynki, lokale, prawa do lokali i obiekty inżynierii lądowej i wodnej" },
+                                { name: "c) urządzenia techniczne i maszyny" },
+                                { name: "d) środki transportu" },
+                                { name: "e) inne środki trwałe" }
+                            ]},
+                            { name: "2. Środki trwałe w budowie" },
+                            { name: "3. Zaliczki na środki trwałe w budowie" }
+                        ]},
+                        { name: "III. Należności długoterminowe" },
+                        { name: "IV. Inwestycje długoterminowe" },
+                        { name: "V. Długoterminowe rozliczenia międzyokresowe" }
+                    ]},
+                    { name: "B. Aktywa obrotowe", children: [
+                        { name: "I. Zapasy", children: [
+                            { name: "1. Materiały" },
+                            { name: "2. Półprodukty i produkty w toku" },
+                            { name: "3. Produkty gotowe" },
+                            { name: "4. Towary" },
+                            { name: "5. Zaliczki na dostawy i usługi" }
+                        ]},
+                        { name: "II. Należności krótkoterminowe" },
+                        { name: "III. Inwestycje krótkoterminowe", children: [
+                            { name: "1. Krótkoterminowe aktywa finansowe", children: [
+                                { name: "c) środki pieniężne i inne aktywa pieniężne", children: [
+                                    { name: "– środki pieniężne w kasie i na rachunkach" },
+                                    { name: "– inne środki pieniężne" },
+                                    { name: "– inne aktywa pieniężne" }
+                                ]}
+                            ]}
+                        ]},
+                        { name: "IV. Krótkoterminowe rozliczenia międzyokresowe" }
+                    ]},
+                    { name: "C. Należne wpłaty na kapitał (fundusz) podstawowy" },
+                    { name: "D. Udziały (akcje) własne" }
+                ]
+            },
+            {
+                name: "PASYWA", children: [
+                    { name: "A. Kapitał (fundusz) własny", children: [
+                        { name: "I. Kapitał (fundusz) podstawowy" },
+                        { name: "II. Kapitał (fundusz) zapasowy" },
+                        { name: "III. Kapitał (fundusz) z aktualizacji wyceny" },
+                        { name: "IV. Pozostałe kapitały (fundusze) rezerwowe" },
+                        { name: "V. Zysk (strata) z lat ubiegłych" },
+                        { name: "VI. Zysk (strata) netto" },
+                        { name: "VII. Odpisy z zysku netto w ciągu roku obrotowego (wielkość ujemna)" }
+                    ]},
+                    { name: "B. Zobowiązania i rezerwy na zobowiązania", children: [
+                        { name: "I. Rezerwy na zobowiązania", children: [
+                            { name: "1. Rezerwa z tytułu odroczonego podatku dochodowego" },
+                            { name: "2. Rezerwa na świadczenia emerytalne i podobne" },
+                            { name: "3. Pozostałe rezerwy" }
+                        ]},
+                        { name: "II. Zobowiązania długoterminowe" },
+                        { name: "III. Zobowiązania krótkoterminowe", children: [
+                            { name: "1. Zobowiązania wobec jednostek powiązanych" },
+                            { name: "2. Zobowiązania wobec pozostałych jednostek, w których jednostka posiada zaangażowanie w kapitale" },
+                            { name: "3. Zobowiązania wobec pozostałych jednostek" },
+                            { name: "4. Fundusze specjalne" }
+                        ]},
+                        { name: "IV. Rozliczenia międzyokresowe" }
+                    ]}
+                ]
+            }
+        ],
+        "z2": [ // Banki
+            {
+                name: "AKTYWA", children: [
+                    { name: "I. Kasa, operacje z Bankiem Centralnym" },
+                    { name: "II. Dłużne papiery wartościowe uprawnione do redyskontowania w Banku Centralnym" },
+                    { name: "III. Należności od sektora finansowego" },
+                    { name: "IV. Należności od sektora niefinansowego" },
+                    { name: "V. Należności od sektora budżetowego" },
+                    { name: "VI. Należności z tytułu zakupionych papierów wartościowych z otrzymanym przyrzeczeniem odkupu" },
+                    { name: "VII. Dłużne papiery wartościowe" },
+                    { name: "VIII. Udziały lub akcje w jednostkach zależnych" },
+                    { name: "IX. Udziały lub akcje w jednostkach współzależnych" },
+                    { name: "X. Udziały lub akcje w jednostkach stowarzyszonych" },
+                    { name: "XI. Udziały lub akcje w innych jednostkach" },
+                    { name: "XII. Pozostałe papiery wartościowe i inne aktywa finansowe" },
+                    { name: "XIII. Wartości niematerialne i prawne" },
+                    { name: "XIV. Rzeczowe aktywa trwałe" },
+                    { name: "XV. Inne aktywa" },
+                    { name: "XVI. Rozliczenia międzyokresowe" },
+                    { name: "XVII. Należne wpłaty na kapitał (fundusz) podstawowy" },
+                    { name: "XVIII. Akcje własne" }
+                ]
+            },
+            {
+                name: "PASYWA", children: [
+                    { name: "I. Zobowiązania wobec Banku Centralnego" },
+                    { name: "II. Zobowiązania wobec sektora finansowego" },
+                    { name: "III. Zobowiązania wobec sektora niefinansowego" },
+                    { name: "IV. Zobowiązania wobec sektora budżetowego" },
+                    { name: "V. Zobowiązania z tytułu sprzedanych papierów wartościowych z udzielonym przyrzeczeniem odkupu" },
+                    { name: "VI. Zobowiązania z tytułu emisji dłużnych papierów wartościowych" },
+                    { name: "VII. Inne zobowiązania z tytułu instrumentów finansowych" },
+                    { name: "VIII. Fundusze specjalne i inne zobowiązania" },
+                    { name: "IX. Koszty i przychody rozliczane w czasie" },
+                    { name: "X. Rezerwy" },
+                    { name: "XI. Zobowiązania podporządkowane" },
+                    { name: "XII. Kapitał (fundusz) podstawowy" },
+                    { name: "XIII. Kapitał (fundusz) zapasowy" },
+                    { name: "XIV. Kapitał (fundusz) z aktualizacji wyceny" },
+                    { name: "XV. Pozostałe kapitały (fundusze) rezerwowe" },
+                    { name: "XVI. Zysk (strata) z lat ubiegłych" },
+                    { name: "XVII. Zysk (strata) netto" },
+                    { name: "XVIII. Odpisy z zysku netto w ciągu roku obrotowego (wielkość ujemna)" }
+                ]
+            }
+        ],
+        "z3": [ // Zakłady Ubezpieczeń
+            {
+                name: "AKTYWA", children: [
+                    { name: "A. Wartości niematerialne i prawne" },
+                    { name: "B. Lokaty" },
+                    { name: "C. Aktywa netto ubezpieczeń na życie, gdy ryzyko lokaty (inwestycyjne) ponosi ubezpieczający" },
+                    { name: "D. Należności" },
+                    { name: "E. Inne składniki aktywów" },
+                    { name: "F. Rozliczenia międzyokresowe" },
+                    { name: "G. Należne wpłaty na kapitał podstawowy" },
+                    { name: "H. Akcje własne" }
+                ]
+            },
+            {
+                name: "PASYWA", children: [
+                    { name: "A. Kapitał własny" },
+                    { name: "B. Zobowiązania podporządkowane" },
+                    { name: "C. Rezerwy techniczno-ubezpieczeniowe" },
+                    { name: "D. Udział reasekuratorów w rezerwach techniczno-ubezpieczeniowych (wartość ujemna)" },
+                    { name: "E. Oszacowane regresy i odzyski (wielkość ujemna)" },
+                    { name: "F. Pozostałe rezerwy" },
+                    { name: "G. Zobowiązania z tytułu depozytów reasekuratorów" },
+                    { name: "H. Pozostałe zobowiązania i fundusze specjalne" },
+                    { name: "I. Rozliczenia międzyokresowe" }
+                ]
+            }
+        ],
+        "z4": [ // Jednostki Mikro (Zgodnie z poleceniem)
+            {
+                name: "AKTYWA", children: [
+                    { name: "A. Aktywa trwałe, w tym środki trwałe" },
+                    { name: "B. Aktywa obrotowe, w tym:", children: [
+                        { name: "– zapasy" },
+                        { name: "– należności krótkoterminowe" }
+                    ]},
+                    { name: "C. Należne wpłaty na kapitał (fundusz) podstawowy" },
+                    { name: "D. Udziały (akcje) własne" }
+                ]
+            },
+            {
+                name: "PASYWA", children: [
+                    { name: "A. Kapitał (fundusz) własny, w tym:", children: [
+                        { name: "– kapitał (fundusz) podstawowy" }
+                    ]},
+                    { name: "B. Zobowiązania i rezerwy na zobowiązania, w tym:", children: [
+                        { name: "– rezerwy na zobowiązania" },
+                        { name: "– zobowiązania z tytułu kredytów i pożyczek" }
+                    ]}
+                ]
+            }
+        ],
+        "z5": [ // Jednostki Małe (Zgodnie z poleceniem)
+            {
+                name: "AKTYWA", children: [
+                    { name: "A. Aktywa trwałe", children: [
+                        { name: "I. Wartości niematerialne i prawne" },
+                        { name: "II. Rzeczowe aktywa trwałe, w tym:", children: [
+                            { name: "– środki trwałe" },
+                            { name: "– środki trwałe w budowie" }
+                        ]},
+                        { name: "III. Należności długoterminowe" },
+                        { name: "IV. Inwestycje długoterminowe, w tym:", children: [
+                            { name: "– nieruchomości" },
+                            { name: "– długoterminowe aktywa finansowe" }
+                        ]},
+                        { name: "V. Długoterminowe rozliczenia międzyokresowe" }
+                    ]},
+                    { name: "B. Aktywa obrotowe", children: [
+                        { name: "I. Zapasy" },
+                        { name: "II. Należności krótkoterminowe, w tym:", children: [
+                            { name: "a) z tytułu dostaw i usług, w tym:", children: [
+                                { name: "– do 12 miesięcy" },
+                                { name: "– powyżej 12 miesięcy" }
+                            ]}
+                        ]},
+                        { name: "III. Inwestycje krótkoterminowe, w tym:", children: [
+                            { name: "a) krótkoterminowe aktywa finansowe, w tym:", children: [
+                                { name: "– środki pieniężne w kasie i na rachunkach" }
+                            ]}
+                        ]},
+                        { name: "IV. Krótkoterminowe rozliczenia międzyokresowe" }
+                    ]},
+                    { name: "C. Należne wpłaty na kapitał (fundusz) podstawowy" },
+                    { name: "D. Udziały (akcje) własne" }
+                ]
+            },
+            {
+                name: "PASYWA", children: [
+                    { name: "A. Kapitał (fundusz) własny", children: [
+                        { name: "I. Kapitał (fundusz) podstawowy" },
+                        { name: "II. Kapitał (fundusz) zapasowy, w tym:", children: [
+                            { name: "– nadwyżka wartości sprzedaży nad wartością nominalną" }
+                        ]},
+                        { name: "III. Kapitał (fundusz) z aktualizacji wyceny, w tym:", children: [
+                            { name: "– z tytułu aktualizacji wartości godziwej" }
+                        ]},
+                        { name: "IV. Pozostałe kapitały (fundusze) rezerwowe" },
+                        { name: "V. Zysk (strata) z lat ubiegłych" },
+                        { name: "VI. Zysk (strata) netto" },
+                        { name: "VII. Odpisy z zysku netto w ciągu roku obrotowego (wielkość ujemna)" }
+                    ]},
+                    { name: "B. Zobowiązania i rezerwy na zobowiązania", children: [
+                        { name: "I. Rezerwy na zobowiązania, w tym:", children: [
+                            { name: "– rezerwa na świadczenia emerytalne i podobne" }
+                        ]},
+                        { name: "II. Zobowiązania długoterminowe, w tym:", children: [
+                            { name: "– z tytułu kredytów i pożyczek" }
+                        ]},
+                        { name: "III. Zobowiązania krótkoterminowe, w tym:", children: [
+                            { name: "a) z tytułu kredytów i pożyczek" },
+                            { name: "b) z tytułu dostaw i usług, w tym:", children: [
+                                { name: "– do 12 miesięcy" },
+                                { name: "– powyżej 12 miesięcy" }
+                            ]},
+                            { name: "c) fundusze specjalne" }
+                        ]},
+                        { name: "IV. Rozliczenia międzyokresowe" }
+                    ]}
+                ]
+            }
+        ]
+    };
+
+    const rootElement = document.getElementById('bilansRoot');
+
+    // Budowanie HTML na podstawie JSON
+    function buildTree(data, parentElement, level) {
+        data.forEach(item => {
+            let li = document.createElement('li');
+            li.className = `level-${level}`;
+            
+            let span = document.createElement('span');
+            span.className = 'item-label';
+            span.textContent = item.name;
+            li.appendChild(span);
+
+            if (item.children && item.children.length > 0) {
+                let ul = document.createElement('ul');
+                buildTree(item.children, ul, level + 1);
+                li.appendChild(ul);
+            }
+            parentElement.appendChild(li);
+        });
+    }
+
+    // Obsługa zmiany załącznika w dropdownie
+    function changeZalacznik() {
+        const selected = document.getElementById('zalacznikSelect').value;
+        rootElement.innerHTML = ''; // Wyczyść obecne drzewo
+        buildTree(db[selected], rootElement, 0); // Zbuduj nowe
+        
+        // Zresetuj wyszukiwarkę
+        document.getElementById('searchInput').value = '';
+        filterTree();
+    }
+
+    // Inicjalizacja startowa (Załącznik 4 ustawiony jako domyślny w HTML)
+    changeZalacznik();
+
+    // Silnik wyszukiwania
+    function filterTree() {
+        let input = document.getElementById('searchInput').value.toLowerCase();
+        let items = document.querySelectorAll('.bilans-tree li');
+        let noResultsMsg = document.getElementById('noResults');
+        let hasMatches = false;
+
+        // Reset przy pustym polu
+        if (input.length === 0) {
+            items.forEach(li => {
+                li.classList.remove('hidden');
+                li.querySelector('.item-label').classList.remove('highlight');
+            });
+            noResultsMsg.style.display = 'none';
+            return;
+        }
+
+        // Ukryj wszystko i zdejmij highlight
+        items.forEach(li => {
+            li.classList.add('hidden');
+            li.querySelector('.item-label').classList.remove('highlight');
+        });
+
+        // Szukaj dopasowań
+        items.forEach(li => {
+            let label = li.querySelector('.item-label');
+            let text = label.textContent.toLowerCase();
+            
+            if (text.includes(input)) {
+                hasMatches = true;
+                label.classList.add('highlight');
+                li.classList.remove('hidden');
+                
+                // Odkryj wszystkich "rodziców" aż do korzenia
+                let parent = li.parentElement;
+                while (parent && parent.tagName === 'UL' && parent.id !== 'bilansRoot') {
+                    parent.parentElement.classList.remove('hidden');
+                    parent = parent.parentElement.parentElement;
+                }
+                
+                // Odkryj wszystkie "dzieci" podświetlonego elementu
+                let children = li.querySelectorAll('li');
+                children.forEach(child => child.classList.remove('hidden'));
+            }
+        });
+
+        // Wyświetlanie komunikatu o braku wyników
+        noResultsMsg.style.display = hasMatches ? 'none' : 'block';
+    }
+</script>
+</body>
+</html>

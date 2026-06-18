@@ -4,7 +4,7 @@
 
 Aplikacja rozwiązuje problem uciążliwego kartkowania papierowych planów kont. Pozwala na błyskawiczne odnalezienie właściwego numeru konta na podstawie codziennych, życiowych pojęć biznesowych, co drastycznie przyspiesza proces dekretowania dokumentów i nauki księgowania.
 
----
+--
 
 ### 🚀 Kluczowe Funkcje Programu
 

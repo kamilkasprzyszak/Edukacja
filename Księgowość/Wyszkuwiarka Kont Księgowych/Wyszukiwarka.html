@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyszukiwarka Kont Księgowych SKwP</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+        .search-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        input[type="text"] {
+            width: 100%;
+            max-width: 600px;
+            padding: 15px 20px;
+            font-size: 18px;
+            border: 2px solid #bdc3c7;
+            border-radius: 30px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+        }
+        .results {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .result-item {
+            display: flex;
+            flex-direction: column;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ecf0f1;
+            transition: background-color 0.2s;
+        }
+        .result-item-top {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-item:hover {
+            background-color: #f9f9f9;
+        }
+        .account-number {
+            font-weight: bold;
+            color: #2980b9;
+            width: 75px;
+            flex-shrink: 0;
+            font-size: 1.1em;
+        }
+        .account-name {
+            flex-grow: 1;
+            padding-right: 15px;
+            font-weight: 500;
+        }
+        .account-badge {
+            font-size: 0.75em;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 20px;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .account-keywords {
+            font-size: 0.85em;
+            color: #7f8c8d;
+            margin-top: 8px;
+            margin-left: 75px;
+            font-style: italic;
+        }
+        
+        .badge-akt { background-color: #e3f2fd; color: #0d47a1; }
+        .badge-pas { background-color: #fce4ec; color: #880e4f; }
+        .badge-ap { background-color: #f3e5f5; color: #4a148c; }
+        .badge-koszt { background-color: #fff8e1; color: #ff8f00; }
+        .badge-przych { background-color: #e8f5e9; color: #1b5e20; }
+        .badge-poza { background-color: #eeeeee; color: #616161; }
+
+        .no-results {
+            padding: 30px;
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .legend span {
+            font-size: 0.8em;
+            padding: 4px 10px;
+            border-radius: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Wyszukiwarka Kont Księgowych</h1>
+    <p class="subtitle">Wariant szkoleniowy SKwP – Pełna lista ze słowami kluczowymi</p>
+
+    <div class="legend">
+        <span class="badge-akt">Aktywne (Wn)</span>
+        <span class="badge-pas">Pasywne (Ma)</span>
+        <span class="badge-ap">Aktywno-Pasywne (Wn/Ma)</span>
+        <span class="badge-koszt">Kosztowe (Wn)</span>
+        <span class="badge-przych">Przychodowe (Ma)</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Wpisz nr konta, nazwę lub słowo (np. paliwo, czynsz, zus)...">
+    </div>
+
+    <div class="results" id="resultsContainer">
+        <div class="no-results">Ładowanie bazy kont...</div>
+    </div>
+
+    <script>
+        const konta = {
+            // ZESPÓŁ 0
+            "010": { nazwa: "Środki trwałe", typ: "Aktywne (Wn)", klasa: "akt", opis: "majątek firmy, sprzęt" },
+            "010-1": { nazwa: "Grunty (w tym prawo użytkowania wieczystego gruntu)", typ: "Aktywne (Wn)", klasa: "akt", opis: "ziemia, działka, pole" },
+            "010-2": { nazwa: "Budynki, lokale, prawa do lokali, obiekty inżynierii lądowej i wodnej", typ: "Aktywne (Wn)", klasa: "akt", opis: "biuro, magazyn, hala, mieszkanie" },
+            "010-3": { nazwa: "Urządzenia techniczne i maszyny", typ: "Aktywne (Wn)", klasa: "akt", opis: "tokarka, wózek widłowy, sprzęt produkcyjny" },
+            "010-4": { nazwa: "Środki transportu", typ: "Aktywne (Wn)", klasa: "akt", opis: "samochód, auto, ciężarówka, pojazd" },
+            "010-5": { nazwa: "Inne środki trwałe", typ: "Aktywne (Wn)", klasa: "akt", opis: "meble, inwentarz żywy" },
+            "020": { nazwa: "Wartości niematerialne i prawne", typ: "Aktywne (Wn)", klasa: "akt", opis: "wnip, oprogramowanie, licencje, patenty, znak towarowy, programy" },
+            "030": { nazwa: "Inwestycje długoterminowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "lokaty pow. 12 m-cy" },
+            "030-1": { nazwa: "Nieruchomości inwestycyjne", typ: "Aktywne (Wn)", klasa: "akt", opis: "lokal na wynajem, ziemia jako lokata" },
+            "030-2": { nazwa: "Inwestycje w wartości niematerialne i prawne", typ: "Aktywne (Wn)", klasa: "akt", opis: "" },
+            "030-3": { nazwa: "Udziały i akcje w innych jednostkach", typ: "Aktywne (Wn)", klasa: "akt", opis: "papiery wartościowe obce" },
+            "030-4": { nazwa: "Inne długoterminowe papiery wartościowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "obligacje" },
+            "030-5": { nazwa: "Inne długoterminowe aktywa finansowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "udzielone pożyczki długoterminowe" },
+            "030-6": { nazwa: "Inne inwestycje długoterminowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "dzieła sztuki, złoto" },
+            "070": { nazwa: "Umorzenie środków trwałych", typ: "Pasywne (Ma)", klasa: "pas", opis: "zużycie majątku" },
+            "070-1": { nazwa: "Umorzenie gruntów", typ: "Pasywne (Ma)", klasa: "pas", opis: "odpisy z tyt. użytkowania wieczystego" },
+            "070-2": { nazwa: "Umorzenie budynków, lokali...", typ: "Pasywne (Ma)", klasa: "pas", opis: "" },
+            "070-3": { nazwa: "Umorzenie urządzeń technicznych i maszyn", typ: "Pasywne (Ma)", klasa: "pas", opis: "" },
+            "070-4": { nazwa: "Umorzenie środków transportu", typ: "Pasywne (Ma)", klasa: "pas", opis: "" },
+            "070-5": { nazwa: "Umorzenie innych środków trwałych", typ: "Pasywne (Ma)", klasa: "pas", opis: "" },
+            "075": { nazwa: "Umorzenie wartości niematerialnych i prawnych", typ: "Pasywne (Ma)", klasa: "pas", opis: "zużycie licencji, programów" },
+            "080": { nazwa: "Środki trwałe w budowie", typ: "Aktywne (Wn)", klasa: "akt", opis: "inwestycja, budowa maszyny lub budynku" },
+            "099": { nazwa: "Konta pozabilansowe", typ: "Pozabilansowe", klasa: "poza", opis: "obce środki, leasing operacyjny" },
+            "099-3": { nazwa: "Środki trwałe w likwidacji", typ: "Pozabilansowe", klasa: "poza", opis: "kasacja, złomowanie" },
+
+            // ZESPÓŁ 1
+            "100": { nazwa: "Kasa", typ: "Aktywne (Wn)", klasa: "akt", opis: "gotówka, utarg, rk, raport kasowy, kw, kp" },
+            "130": { nazwa: "Rachunki bankowe podstawowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "wyciąg bankowy" },
+            "130-1": { nazwa: "Rachunek bieżący", typ: "Aktywne (Wn)", klasa: "akt", opis: "bank, przelew, wb, zapłata z konta" },
+            "130-2": { nazwa: "Rachunek VAT", typ: "Aktywne (Wn)", klasa: "akt", opis: "split payment, mpp, mechanizm podzielonej płatności" },
+            "132": { nazwa: "Rachunki bankowe pomocnicze", typ: "Aktywne (Wn)", klasa: "akt", opis: "rachunek walutowy" },
+            "133": { nazwa: "Lokaty bankowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "depozyty" },
+            "133-1": { nazwa: "Lokaty bankowe – długoterminowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "" },
+            "133-2": { nazwa: "Lokaty bankowe – krótkoterminowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "lokaty do 12 m-cy, overnight" },
+            "134": { nazwa: "Kredyty bankowe", typ: "Pasywne (Ma)", klasa: "pas", opis: "pożyczka z banku, debet" },
+            "134-1": { nazwa: "Kredyty bankowe – długoterminowe", typ: "Pasywne (Ma)", klasa: "pas", opis: "" },
+            "134-2": { nazwa: "Kredyty bankowe – krótkoterminowe", typ: "Pasywne (Ma)", klasa: "pas", opis: "kredyt w rachunku" },
+            "139": { nazwa: "Środki pieniężne w drodze", typ: "Aktywne (Wn)", klasa: "akt", opis: "pieniądze między kasą a bankiem, dotarcie przelewu" },
+            "140": { nazwa: "Pozostałe krótkoterminowe aktywa finansowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "czeki, weksle obce" },
+            "141": { nazwa: "Inne inwestycje krótkoterminowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "" },
+            "160": { nazwa: "Udziały (akcje) własne", typ: "Aktywne (Wn)", klasa: "akt", opis: "umorzenie udziałów" },
+
+            // ZESPÓŁ 2
+            "200": { nazwa: "Rozrachunki z odbiorcami", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "klient, kupujący, sprzedaliśmy komuś, należność, faktura sprzedaży" },
+            "202": { nazwa: "Rozrachunki z dostawcami", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "faktura zakupu, kontrahent od którego kupujemy, zobowiązanie" },
+            "220": { nazwa: "Rozrachunki publicznoprawne", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "urząd skarbowy, us" },
+            "220-1": { nazwa: "Rozrachunki z tytułu VAT", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "rozliczenie urzędu skarbowego vat-7, przelew do us" },
+            "220-2": { nazwa: "Rozrachunki z tyt. pod. doch. od osób fizycznych", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "pit, podatek dochodowy, nadpłacony podatek, zaliczka" },
+            "220-3": { nazwa: "Rozrachunki z tyt. pod. doch. od osób prawnych", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "cit, podatek spółki z o.o., nadpłata" },
+            "220-4": { nazwa: "Rozrachunki z ZUS", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "składki ubezpieczeniowe, zdrowotne, społeczne" },
+            "220-6": { nazwa: "Pozostałe rozrachunki publicznoprawne", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "cło, pfron, podatek od nieruchomości rozrachunek" },
+            "221": { nazwa: "Rozliczenie VAT należnego i naliczonego", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "przeksięgowanie vat na koniec miesiąca" },
+            "221-1": { nazwa: "VAT należny", typ: "Pasywne (Ma)", klasa: "pas", opis: "vat od sprzedaży, z wystawionych faktur" },
+            "221-2": { nazwa: "VAT naliczony", typ: "Aktywne (Wn)", klasa: "akt", opis: "vat z faktur kosztowych, od zakupów" },
+            "230": { nazwa: "Rozrachunki z tytułu wynagrodzeń", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "pensja netto, wypłata dla pracownika, lista płac" },
+            "234": { nazwa: "Pozostałe rozrachunki z pracownikami", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "zaliczka dla pracownika, pożyczka z zfśs, niedobór, manko" },
+            "240": { nazwa: "Rozrachunki z tyt. nabycia i rozchodu niefin. aktywów trwałych", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "" },
+            "240-1": { nazwa: "Rozrachunki z tyt. nabycia niefin. aktywów trwałych", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "zakup środka trwałego faktura" },
+            "240-2": { nazwa: "Rozrachunki z tyt. rozchodu niefin. aktywów trwałych", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "sprzedaż samochodu firmowego faktura" },
+            "241": { nazwa: "Udzielone pożyczki (instrumenty finansowe)", typ: "Aktywne (Wn)", klasa: "akt", opis: "komuś pożyczyliśmy pieniądze" },
+            "241-1": { nazwa: "Udzielone pożyczki – długoterminowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "" },
+            "241-2": { nazwa: "Udzielone pożyczki – krótkoterminowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "" },
+            "242": { nazwa: "Otrzymane pożyczki (instrumenty finansowe)", typ: "Pasywne (Ma)", klasa: "pas", opis: "ktoś nam pożyczył (np. udziałowiec)" },
+            "242-1": { nazwa: "Otrzymane pożyczki – długoterminowe", typ: "Pasywne (Ma)", klasa: "pas", opis: "" },
+            "242-2": { nazwa: "Otrzymane pożyczki – krótkoterminowe", typ: "Pasywne (Ma)", klasa: "pas", opis: "" },
+            "245": { nazwa: "Należne wpłaty na kapitał (fundusz) własny", typ: "Aktywne (Wn)", klasa: "akt", opis: "brakujące wkłady wspólników" },
+            "249": { nazwa: "Pozostałe rozrachunki", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "rozrachunki z właścicielami, dywidendy, wadia" },
+
+            // ZESPÓŁ 3
+            "300": { nazwa: "Rozliczenie zakupu", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "faktura bez towaru, dostawy niefakturowane, odchylenia" },
+            "300-1": { nazwa: "Rozliczenie zakupu wartości niematerialnych i prawnych", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "" },
+            "300-2": { nazwa: "Rozliczenie zakupu środków trwałych i środków trwałych w budowie", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "" },
+            "300-3": { nazwa: "Rozliczenie zakupu materiałów", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "materiały w drodze" },
+            "300-4": { nazwa: "Rozliczenie zakupu towarów", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "towary w drodze" },
+            "310": { nazwa: "Materiały", typ: "Aktywne (Wn)", klasa: "akt", opis: "surowce, części, zapasy, pz, rw" },
+            "330": { nazwa: "Towary", typ: "Aktywne (Wn)", klasa: "akt", opis: "na handel, sklep, magazyn" },
+
+            // ZESPÓŁ 4
+            "400": { nazwa: "Amortyzacja", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "odpis z tytułu zużycia maszyny/auta" },
+            "401": { nazwa: "Zużycie materiałów i energii", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "prąd, woda, gaz, paliwo, benzyna, papier ksero, wyposażenie, rw" },
+            "402": { nazwa: "Usługi obce", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "telefon, internet, czynsz, wynajem, księgowość, transport, kurier, remont, naprawa" },
+            "403": { nazwa: "Podatki i opłaty", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "podatek od nieruchomości, opłata skarbowa, znaczki pocztowe, opłata sądowa" },
+            "404": { nazwa: "Wynagrodzenia", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "lista płac, kwota brutto, umowa o pracę, umowa zlecenie" },
+            "405": { nazwa: "Ubezpieczenia społeczne i inne świadczenia", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "zus pracodawcy, szkolenie bhp, odzież robocza, fundusz socjalny zfśs" },
+            "409": { nazwa: "Pozostałe koszty rodzajowe", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "krajowa i zagraniczna podróż służbowa, delegacja, dieta, reprezentacja firmy" },
+            "490": { nazwa: "Rozliczenie kosztów rodzajowych", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "krąg kosztów, zamknięcie kont zespołu 4" },
+
+            // ZESPÓŁ 5
+            "500": { nazwa: "Koszty działalności podstawowej", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "produkcja, koszty wydziałowe" },
+            "500-1": { nazwa: "Koszty produkcji wyrobów", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "" },
+            "500-2": { nazwa: "Koszty działalności usługowej", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "" },
+            "500-3": { nazwa: "Koszty działalności handlowej", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "" },
+            "540": { nazwa: "Koszty sprzedaży", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "reklama, marketing, pakowanie, wysyłka do klienta" },
+            "550": { nazwa: "Koszty ogólnego zarządu", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "zarząd, administracja, biuro rachunkowe dla firmy" },
+
+            // ZESPÓŁ 6
+            "600": { nazwa: "Wyroby (produkty)", typ: "Aktywne (Wn)", klasa: "akt", opis: "to co wyprodukowaliśmy, pw" },
+            "600-1": { nazwa: "Wyroby (produkty) gotowe", typ: "Aktywne (Wn)", klasa: "akt", opis: "" },
+            "600-2": { nazwa: "Półprodukty", typ: "Aktywne (Wn)", klasa: "akt", opis: "" },
+            "600-3": { nazwa: "Produkty w toku", typ: "Aktywne (Wn)", klasa: "akt", opis: "produkcja niezakończona" },
+            "640": { nazwa: "Rozliczenia międzyokresowe", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "rmk czynne i bierne, opłacona z góry polisa na cały rok, prenumerata" },
+
+            // ZESPÓŁ 7
+            "700": { nazwa: "Przychody ze sprzedaży produktów", typ: "Przychodowe (Ma)", klasa: "przych", opis: "sprzedaż własnych wyrobów" },
+            "700-1": { nazwa: "Przychody ze sprzedaży wyrobów gotowych", typ: "Przychodowe (Ma)", klasa: "przych", opis: "faktura dla klienta za nasz wyrób" },
+            "700-2": { nazwa: "Przychody ze sprzedaży usług", typ: "Przychodowe (Ma)", klasa: "przych", opis: "faktura za wykonaną usługę" },
+            "711": { nazwa: "Koszt wytworzenia sprzedanych produktów", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "wz na wyroby" },
+            "711-1": { nazwa: "Koszt wytworzenia sprzedanych wyrobów gotowych", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "" },
+            "711-2": { nazwa: "Koszt wytworzenia sprzedanych usług", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "" },
+            "730": { nazwa: "Przychody ze sprzedaży towarów", typ: "Przychodowe (Ma)", klasa: "przych", opis: "utarg za towary z obcej produkcji" },
+            "731": { nazwa: "Wartość sprzedanych towarów", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "wz towaru, wydanie z magazynu po sprzedaży" },
+            "750": { nazwa: "Przychody finansowe", typ: "Przychodowe (Ma)", klasa: "przych", opis: "dodatnie różnice kursowe" },
+            "750-1": { nazwa: "Dywidendy i udziały w zyskach", typ: "Przychodowe (Ma)", klasa: "przych", opis: "" },
+            "750-2": { nazwa: "Odsetki", typ: "Przychodowe (Ma)", klasa: "przych", opis: "odsetki od lokat, zysk na koncie bankowym" },
+            "750-3": { nazwa: "Przychody z tytułu rozchodu aktywów finansowych", typ: "Przychodowe (Ma)", klasa: "przych", opis: "sprzedaż akcji z zyskiem" },
+            "750-4": { nazwa: "Aktualizacja wartości aktywów finansowych", typ: "Przychodowe (Ma)", klasa: "przych", opis: "rozwiązanie odpisu aktualizującego udziały" },
+            "750-6": { nazwa: "Inne przychody finansowe", typ: "Przychodowe (Ma)", klasa: "przych", opis: "" },
+            "751": { nazwa: "Koszty finansowe", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "ujemne różnice kursowe" },
+            "751-1": { nazwa: "Odsetki", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "zapłacone odsetki od kredytu, nota odsetkowa" },
+            "751-2": { nazwa: "Koszty z tytułu rozchodu aktywów finansowych", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "strata ze sprzedaży akcji" },
+            "751-3": { nazwa: "Aktualizacja wartości aktywów finansowych", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "utworzenie odpisu na akcje" },
+            "751-5": { nazwa: "Inne koszty finansowe", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "" },
+            "760": { nazwa: "Pozostałe przychody operacyjne", typ: "Przychodowe (Ma)", klasa: "przych", opis: "otrzymana darowizna, dotacja, nadwyżka kasowa, odszkodowanie" },
+            "760-1": { nazwa: "Przychody z tytułu rozchodu niefinansowych aktywów trwałych", typ: "Przychodowe (Ma)", klasa: "przych", opis: "sprzedaż maszyny, samochodu firmowego" },
+            "760-3": { nazwa: "Aktualizacja wartości aktywów niefinansowych", typ: "Przychodowe (Ma)", klasa: "przych", opis: "rozwiązanie odpisu na należności" },
+            "760-4": { nazwa: "Inne pozostałe przychody operacyjne", typ: "Przychodowe (Ma)", klasa: "przych", opis: "przedawnione zobowiązania" },
+            "761": { nazwa: "Pozostałe koszty operacyjne", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "kary, grzywny, mandaty, niedobór, przekazana darowizna" },
+            "761-1": { nazwa: "Koszty z tytułu rozchodu niefinansowych aktywów trwałych", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "wartość netto sprzedanej maszyny, likwidacja niezamortyzowanego ST" },
+            "761-2": { nazwa: "Aktualizacja wartości aktywów niefinansowych", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "utworzenie odpisu na należności wątpliwe" },
+            "761-3": { nazwa: "Inne pozostałe koszty operacyjne", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "" },
+
+            // ZESPÓŁ 8
+            "800": { nazwa: "Kapitał (fundusz) podstawowy", typ: "Pasywne (Ma)", klasa: "pas", opis: "kapitał zakładowy, udziały wspólników, akcje wyemitowane" },
+            "811": { nazwa: "Kapitał (fundusz) zapasowy", typ: "Pasywne (Ma)", klasa: "pas", opis: "agio, zatrzymane zyski" },
+            "812": { nazwa: "Pozostałe kapitały (fundusze) rezerwowe", typ: "Pasywne (Ma)", klasa: "pas", opis: "" },
+            "813": { nazwa: "Kapitał (fundusz) z aktualizacji wyceny", typ: "Pasywne (Ma)", klasa: "pas", opis: "przeszacowanie środków trwałych" },
+            "820": { nazwa: "Rozliczenie wyniku finansowego", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "zysk z lat ubiegłych, strata z lat ubiegłych, niepodzielony wynik" },
+            "830": { nazwa: "Rezerwy na zobowiązania", typ: "Pasywne (Ma)", klasa: "pas", opis: "rezerwa na toczący się proces sądowy, rezerwa na odprawy emerytalne" },
+            "840": { nazwa: "Rozliczenia międzyokresowe przychodów", typ: "Pasywne (Ma)", klasa: "pas", opis: "rmp, dotacje do środków trwałych, otrzymana zaliczka na 100%" },
+            "850": { nazwa: "Fundusze specjalne", typ: "Pasywne (Ma)", klasa: "pas", opis: "zakładowy fundusz świadczeń socjalnych zfśs" },
+            "860": { nazwa: "Wynik finansowy", typ: "Aktywno-Pasywne (Wn/Ma)", klasa: "ap", opis: "zysk netto, strata za bieżący rok" },
+            "870": { nazwa: "Podatek dochodowy i inne obowiązkowe obciążenia wyniku finansowego", typ: "Kosztowe (Wn)", klasa: "koszt", opis: "podatek cit do zapłaty za dany rok" }
+        };
+
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        function renderujWyniki(wyniki) {
+            resultsContainer.innerHTML = ''; 
+
+            if (wyniki.length === 0) {
+                resultsContainer.innerHTML = '<div class="no-results">Brak wyników. Spróbuj zmienić słowo.</div>';
+                return;
+            }
+
+            // Sortowanie numeryczne kont, by zachowały porządek rosnący
+            wyniki.sort((a, b) => a[0].localeCompare(b[0]));
+
+            wyniki.forEach(([numer, dane]) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result-item';
+                
+                const topDiv = document.createElement('div');
+                topDiv.className = 'result-item-top';
+
+                const numberSpan = document.createElement('div');
+                numberSpan.className = 'account-number';
+                numberSpan.textContent = numer;
+
+                const nameSpan = document.createElement('div');
+                nameSpan.className = 'account-name';
+                nameSpan.textContent = dane.nazwa;
+
+                const badgeSpan = document.createElement('div');
+                badgeSpan.className = `account-badge badge-${dane.klasa}`;
+                badgeSpan.textContent = dane.typ;
+
+                topDiv.appendChild(numberSpan);
+                topDiv.appendChild(nameSpan);
+                topDiv.appendChild(badgeSpan);
+                resultDiv.appendChild(topDiv);
+
+                if (dane.opis && dane.opis.trim() !== "") {
+                    const keywordsSpan = document.createElement('div');
+                    keywordsSpan.className = 'account-keywords';
+                    keywordsSpan.textContent = `Szuka też po: ${dane.opis}`;
+                    resultDiv.appendChild(keywordsSpan);
+                }
+
+                resultsContainer.appendChild(resultDiv);
+            });
+        }
+
+        function pokazWszystkie() {
+            renderujWyniki(Object.entries(konta));
+        }
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            
+            if (query === '') {
+                pokazWszystkie();
+                return;
+            }
+
+            const filtrowane = Object.entries(konta).filter(([numer, dane]) => {
+                const wNumerze = numer.toLowerCase().includes(query);
+                const wNazwie = dane.nazwa.toLowerCase().includes(query);
+                const wOpisie = dane.opis ? dane.opis.toLowerCase().includes(query) : false;
+                
+                return wNumerze || wNazwie || wOpisie;
+            });
+
+            renderujWyniki(filtrowane);
+        });
+
+        // Wczytanie na start
+        pokazWszystkie();
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-\## 📱 Aplikacja: Księgowy Trener - Zaawansowany Generator Bilansów
+## 📱 Aplikacja: Księgowy Trener - Zaawansowany Generator Bilansów
 
 
 

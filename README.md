@@ -5,8 +5,7 @@ Repozytorium zawiera autorskie skrypty, mini-aplikacje oraz narzędzia programis
 Architektura całego projektu została zaprojektowana w sposób **całkowicie agnostyczny (domain-agnostic)**. Narzędzia nie są powiązane z żadną konkretną niszą – służą do strukturyzacji, parsowania i optymalizacji zapamiętywania dowolnych informacji, niezależnie od tego, czy są to przepisy prawne, składnia języków programowania, procedury techniczne czy nomenklatura medyczna.
 
 Wszystkie programy bazują na rygorystycznych modelach kognitywnych: powtórkach interwałowych (Spaced Repetition), aktywnym odtwarzaniu informacji (Active Recall) oraz automatycznej syntezie danych (Data Parsing).
-![Uploading image.png…]()
-
+<img width="1651" height="906" alt="image" src="https://github.com/user-attachments/assets/ddb0ac70-cfb7-4d60-88cb-5ce25fa2b57a" />
 
 ---
 

@@ -1,83 +1,47 @@
-# Systemy i Narzędzia Przyspieszonej Nauki (Accelerated Learning Frameworks)
+# Universal Frameworks for Accelerated Learning & Knowledge Engineering
 
+Repozytorium zawiera autorskie skrypty, mini-aplikacje oraz narzędzia programistyczne automatyzujące i optymalizujące proces przyswajania wiedzy z dowolnej dziedziny, branży czy dyscypliny naukowej. Głównym celem projektu jest dostarczenie uniwersalnych rozwiązań z zakresu inżynierii wiedzy (Knowledge Engineering), które minimalizują czas potrzebny na przejście od surowych danych do pełnego opanowania teorii i praktyki.
 
-Repozytorium zawiera autorskie skrypty, mini-aplikacje oraz narzędzia automatyzujące i optymalizujące proces przyswajania złożonej wiedzy dziedzinowej. Głównym celem projektu jest implementacja założeń inżynierii wiedzy w celu maksymalnego skrócenia czasu potrzebnego na opanowanie teorii i praktyki w niszach wymagających wysokiej precyzji (np. finanse i księgowość, mechanika rynków finansowych, farmacja).
+Architektura całego projektu została zaprojektowana w sposób **całkowicie agnostyczny (domain-agnostic)**. Narzędzia nie są powiązane z żadną konkretną niszą – służą do strukturyzacji, parsowania i optymalizacji zapamiętywania dowolnych informacji, niezależnie od tego, czy są to przepisy prawne, składnia języków programowania, procedury techniczne czy nomenklatura medyczna.
 
+Wszystkie programy bazują na rygorystycznych modelach kognitywnych: powtórkach interwałowych (Spaced Repetition), aktywnym odtwarzaniu informacji (Active Recall) oraz automatycznej syntezie danych (Data Parsing).
+![Uploading image.png…]()
 
-Narzędzia opierają się na algorytmach powtórek interwałowych (Spaced Repetition), aktywnym testowaniu (Active Recall) oraz automatycznej syntezie danych (Data Parsing).
-
-
-<img width="1655" height="917" alt="image" src="https://github.com/user-attachments/assets/044f442b-cf5a-4c38-ba1f-236d1d8a7b37" />
 
 ---
-
-
 
 ## 🛠️ Struktura i Komponenty Systemu
 
+Katalog został podzielony według narzędzi realizujących konkretne operacje na danych i procesach kognitywnych:
 
+### 1. Automatyzacja baz wiedzy i struktur memorandum (`/generators`)
+Uniwersalne skrypty odpowiedzialne za transformację surowych, nieustrukturyzowanych danych wejściowych w gotowe systemy edukacyjne.
+* **Strukturyzatory danych tekstowych (Raw Data Parsers):** Narzędzia automatycznie izolujące definicje, reguły i korelacje logiczne z dowolnych plików tekstowych (dokumentacje, e-booki, akty prawne).
+* **Uniwersalne translatory baz danych (Anki/Markdown Exporters):** Skrypty mapujące tabele, słowniki i hierarchie pojęciowe do formatów natywnie obsługiwanych przez zewnętrzne systemy powtórek interwałowych.
 
-Katalog został podzielony według narzędzi realizujących konkretne techniki kognitywne i edukacyjne:
+### 2. Środowiska weryfikacji i symulatory logiczne (`/simulators`)
+Interaktywne aplikacje i narzędzia konsolowe (CLI) służące do obiektywnego testowania poziomu opanowania materiału.
+* **Adaptacyjne silniki testujące (Adaptive Testing Engines):** Algorytmy ważące trudność zagadnień w czasie rzeczywistym na podstawie historii błędów użytkownika (dynamiczna optymalizacja sesji powtórkowych).
+* **Symulatory sekwencji i procedur (Procedural Simulators):** Narzędzia weryfikujące poprawność chronologiczną, logiczną lub składniową wprowadzanych operacji (np. sprawdzanie poprawności kroków w złożonych procesach technologicznych, operacjach finansowych czy algorytmach).
 
-
-
-### 1. Automatyzacja baz wiedzy i fiszek (`/generators`)
-
-Skrypty odpowiedzialne za transformację surowych, nieustrukturyzowanych danych tekstowych w gotowe bazy edukacyjne.
-
-* **Parsery aktów prawnych i regulacji:** Narzędzia wyciągające kluczowe definicje i reguły (np. na potrzeby strukturyzacji standardów rachunkowości i przepisów podatkowych).
-
-* **Generator Anki/Markdown:** Skrypty automatycznie mapujące tabele danych (np. klasyfikacje chemiczne/farmaceutyczne lub mechanizmy rynkowe) do formatów obsługiwanych przez systemy powtórek interwałowych.
-
-
-
-### 2. Symulatory i narzędzia weryfikacji wiedzy (`/simulators`)
-
-Aplikacje konsolowe (CLI) oraz skrypty interaktywne służące do natychmiastowego testowania poziomu opanowania materiału.
-
-* **Algorytmy selekcji pytań:** Narzędzia ważące trudność pytań na podstawie historii błędów użytkownika (optymalizacja sesji powtórkowych).
-
-* **Symulatory procedur:** Narzędzia weryfikujące poprawność chronologiczną i logiczną wprowadzanych danych (np. dekretacja zdarzeń gospodarczych w księgowości czy procedury technologiczne).
-
-
-
-### 3. Agregatory i ekstraktory esencji danych (`/parsers`)
-
+### 3. Ekstraktory esencji informacyjnej (`/parsers`)
 Narzędzia automatyzujące etap selekcji materiału według zasady Pareto (80/20).
-
-* **NLP Content Extractors:** Proste skrypty wykorzystujące analizę tekstową do izolowania klastrów pojęciowych najczęściej pojawiających się w literaturze specjalistycznej.
-
-
+* **NLP Content Extractors:** Skrypty wykorzystujące podstawowe techniki przetwarzania języka naturalnego do identyfikacji klastrów pojęciowych najczęściej pojawiających się w analizowanych materiałach (automatyczne odrzucanie szumu informacyjnego).
 
 ---
 
+## 🌐 Walidacja Uniwersalności (Przykłady Zastosowań)
 
+Elastyczność architektury narzędzi została potwierdzona w testach produkcyjnych na skrajnie zróżnicowanych i wymagających wysokiej precyzji obszarach wiedzy:
 
-## 💡 Przykłady Zastosowań Dziedzinowych (Use Cases)
-
-
-
-Architektura narzędzi jest w pełni agnostyczna (niezależna od przedmiotu nauki). Systemy były z powodzeniem testowane na bazach danych z obszarów:
-
-* **Finanse i Księgowość:** Automatyzacja nauki planów kont, kodyfikacji podatkowych oraz struktur bilansowych.
-
-* **Handel Ilościowy i Programowanie:** Szybkie przyswajanie składni nowych języków (MQL5, zaawansowane API giełdowe) oraz matematyki finansowej.
-
-* **Farmacja i Chemia:** Strukturyzacja wiedzy z zakresu interakcji substancji czynnych oraz nomenklatury technicznej.
-
-
+* **Finanse i Księgowość:** Wykorzystanie parserów do błyskawicznej strukturyzacji i internalizacji planów kont, kodyfikacji podatkowych oraz międzynarodowych standardów rachunkowości.
+* **Handel Ilościowy i Programowanie:** Zastosowanie generatorów do przyspieszonej nauki składni zaawansowanych języków (MQL5, Python), struktur API oraz zaawansowanych modeli ekonometrycznych.
+* **Medycyna i Farmacja:** Użycie symulatorów sekwencji do opanowania nomenklatury chemicznej, interakcji substancji czynnych oraz restrykcyjnych procedur laboratoryjnych.
 
 ---
-
-
 
 ## 💻 Stack Technologiczny
 
-
-
 * **Języki programowania:** Python, Bash
-
-* **Formaty danych:** JSON, CSV, Markdown
-
-* **Metodologie:** Spaced Repetition (SuperMemo/Anki algorithm core), Active Recall Frameworks
-
+* **Formaty danych:** JSON, CSV, Markdown, XML
+* **Zastosowane metodologie:** Spaced Repetition (SuperMemo/Anki algorithm core), Active Recall Frameworks, Inżynieria Wiedzy

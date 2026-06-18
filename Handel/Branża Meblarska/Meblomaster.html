@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indeksy Meblowe - Trening</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+        <header>
+            <div class="header-content">
+                <h1><i class="fa-solid fa-couch"></i> MebloMaster</h1>
+                <p>Opanuj indeksy i dostawców</p>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="quiz"><i class="fa-solid fa-gamepad"></i> Quiz</button>
+                <button class="tab-btn" data-tab="flashcards"><i class="fa-solid fa-clone"></i> Fiszki (Mnemotechnika)</button>
+                <button class="tab-btn" data-tab="memory"><i class="fa-solid fa-puzzle-piece"></i> Memory</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- QUIZ TAB -->
+            <section id="quiz" class="tab-content active">
+                <div class="stats-bar">
+                    <div class="stat"><i class="fa-solid fa-check"></i> Poprawne: <span id="score-correct">0</span></div>
+                    <div class="stat"><i class="fa-solid fa-xmark"></i> Błędne: <span id="score-wrong">0</span></div>
+                </div>
+
+                <div class="quiz-card glass-panel">
+                    <div class="question-header">Pytanie</div>
+                    <h2 id="question-text" class="question-text">Ładowanie pytania...</h2>
+                    
+                    <div id="options-container" class="options-grid">
+                        <!-- Options will be dynamically generated here -->
+                    </div>
+
+                    <div id="feedback-container" class="feedback hidden">
+                        <p id="feedback-text"></p>
+                        <button id="next-btn" class="primary-btn">Następne pytanie <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FLASHCARDS TAB -->
+            <section id="flashcards" class="tab-content">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-input" placeholder="Wyszukaj po indeksie lub dostawcy...">
+                </div>
+                
+                <div class="flashcards-grid" id="flashcards-container">
+                    <!-- Flashcards will be dynamically generated here -->
+                </div>
+            </section>
+
+            <!-- MEMORY TAB -->
+            <section id="memory" class="tab-content">
+                <div class="stats-bar">
+                    <div class="stat"><i class="fa-solid fa-star"></i> Punkty: <span id="memory-score">0</span></div>
+                    <div class="stat"><i class="fa-solid fa-arrow-rotate-left"></i> Ruchy: <span id="memory-moves">0</span></div>
+                    <button id="memory-reset" class="primary-btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Od nowa</button>
+                </div>
+                
+                <div class="memory-grid" id="memory-board">
+                    <!-- Memory cards will be dynamically generated here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
